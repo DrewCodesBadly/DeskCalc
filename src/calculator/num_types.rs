@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::{Add, Div, Mul, MulAssign, Neg}};
+use std::{fmt::Display, ops::{Add, Div, Mul, Neg}};
 
 // enum containing different types of numbers the calculator may handle
 pub enum NumType {

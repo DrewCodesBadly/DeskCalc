@@ -11,7 +11,6 @@ use buffers::Collapse;
 pub enum CalculatorError {
     UnknownSymbol(String),
     MissingVarEquals,
-    MissingParantheses,
     ParseNumberErrror
 }
 
@@ -20,7 +19,6 @@ impl CalculatorError {
         match self {
             CalculatorError::UnknownSymbol(s) => format!("Error: Could not find symbol \"{}\"", s),
             CalculatorError::MissingVarEquals => String::from("Error: Missing \"=\" after variable name"),
-            CalculatorError::MissingParantheses => String::from("Error: Missing closing \")\""),
             CalculatorError::ParseNumberErrror => String::from("Error: Invalid number")
         }
     }
@@ -33,7 +31,7 @@ pub fn calculate(input: &str) -> Result<String, CalculatorError> {
     let mut expression = input.replace(' ', "");
 
     // Return nothing if given nothing
-    if expression.is_empty() { return Ok(String::from("")) }
+    if expression.is_empty() { return Ok(String::from("...")) }
 
     // check if we are assigning a new calculator variable using #var_name= syntax
     let assigning_to: Option<String> = match expression.chars().next().expect("Previously checked if string was empty") {
@@ -163,7 +161,6 @@ fn parse_chars_to_f64<T: Iterator<Item = char> + Clone>(first: char, iter: &mut 
     {
         Ok(f)
     }
-
     else
     {
         Err(CalculatorError::ParseNumberErrror)

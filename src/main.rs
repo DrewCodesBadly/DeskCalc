@@ -1,18 +1,20 @@
 use core::f32;
 
 use eframe::{run_native, App, CreationContext, NativeOptions};
-use egui::{Id, Label, Layout, RichText, TextEdit, TopBottomPanel};
+use egui::{CentralPanel, Id, Label, Layout, RichText, TextEdit, TopBottomPanel};
+use log::Log;
 
 mod calculator;
+mod log;
 
 #[derive(Default)]
 struct DeskCalc {
     input_text: String,
-    out: String
+    out: String,
+    log: log::Log
 }
 
 impl DeskCalc {
-
     fn new(_cc: &CreationContext<'_>) -> Self {
         Self::default()
     }
@@ -34,12 +36,14 @@ impl App for DeskCalc {
                 if response.changed() {
                     // Calculate output given response and set output buffer
                     // Errors are mapped to a string representation which still goes in the output buffer
-                    self.out = calculator::calculate(&self.input_text).unwrap_or_else(|e| {
+                    self.out = " = ".to_owned() + &calculator::calculate(&self.input_text).unwrap_or_else(|e| {
                         e.as_string()
                     });
                 }
                 if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    // TODO: send to log
+                    self.log.push_results(&self.input_text, &self.out);
+                    self.input_text.clear();
+                    self.out.clear();
                 }
 
                 ui.with_layout(Layout::right_to_left(egui::Align::Max), |ui| {
@@ -52,7 +56,19 @@ impl App for DeskCalc {
         
         // Add TopBottomPanel for menu here
 
-        // Add CentralPanel showing log here
+        CentralPanel::default().show(ctx, |ui| {
+            ui.with_layout(Layout::bottom_up(egui::Align::Min), |ui| {
+                for command in self.log.commands.iter().rev() {
+                    ui.add(
+                        Label::new(RichText::new(&command.1))
+                        .halign(egui::Align::Max)
+                    );
+                    ui.add(
+                        Label::new(RichText::new("\t".to_owned() + &command.0).weak())
+                    );
+                }
+            });
+        });
 
     }
 }
