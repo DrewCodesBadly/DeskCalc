@@ -1,7 +1,7 @@
-use std::f64::consts::{E, PI, TAU};
-use std::collections::HashMap;
 use crate::calculator::num_types::NumType;
 use crate::calculator::num_types::NumType::*;
+use std::collections::HashMap;
+use std::f64::consts::{E, PI, TAU};
 
 pub fn get_constants_hashmap() -> HashMap<String, NumType> {
     let mut c: HashMap<String, NumType> = HashMap::new();

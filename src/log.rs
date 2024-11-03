@@ -1,16 +1,16 @@
-use std::collections::HashMap;
 use crate::calculator::num_types::NumType;
+use std::collections::HashMap;
 use symbol_type::SymbolType;
 use symbol_type::SymbolType::*;
 
-pub mod symbol_type;
 mod built_in;
+pub mod symbol_type;
 
 #[derive(Default)]
 pub struct Log {
     pub commands: Vec<(String, String)>,
     vars: HashMap<String, NumType>,
-    consts: HashMap<String, NumType>
+    consts: HashMap<String, NumType>,
 }
 
 impl Log {
@@ -42,7 +42,7 @@ impl Log {
         self.commands.clear();
     }
 
-    pub fn search_symbol(&self, symbol: &str) -> Option<SymbolType>{
+    pub fn search_symbol(&self, symbol: &str) -> Option<SymbolType> {
         // Try every base of symbols
         // First try vars
         if let Some(s) = self.vars.get(symbol) {

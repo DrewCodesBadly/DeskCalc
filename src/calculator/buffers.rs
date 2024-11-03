@@ -4,11 +4,11 @@ use NumType::*;
 #[derive(Default)]
 pub struct MultiplicationBuffer {
     numbers: Vec<NumType>,
-    pub dividing: bool
+    pub dividing: bool,
 }
 #[derive(Default)]
 pub struct AdditionBuffer {
-    numbers: Vec<NumType>
+    numbers: Vec<NumType>,
 }
 
 pub trait Collapse {
@@ -47,7 +47,7 @@ impl AdditionBuffer {
 impl MultiplicationBuffer {
     pub fn push(&mut self, n: NumType) {
         if self.dividing {
-            self.numbers.push(Scalar(1.0)/n);
+            self.numbers.push(Scalar(1.0) / n);
             self.dividing = false;
         } else {
             self.numbers.push(n);

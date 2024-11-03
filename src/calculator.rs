@@ -1,27 +1,30 @@
-pub mod num_types;
 mod buffers;
+pub mod num_types;
 
-use std::{clone::Clone, fmt::Display};
+use crate::log::symbol_type::SymbolType::{self, *};
+use crate::log::Log;
+use buffers::Collapse;
 use itertools::Itertools;
 use num_types::NumType;
-use buffers::Collapse;
-use crate::log::Log;
-use crate::log::symbol_type::SymbolType::{self, *};
+use std::{clone::Clone, fmt::Display};
 
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum CalculatorError {
     UnknownSymbol(String),
     MissingVarEquals,
-    ParseNumberErrror
+    ParseNumberErrror,
 }
 
 impl Display for CalculatorError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CalculatorError::UnknownSymbol(s) => write!(f, "Error: Could not find symbol \"{}\"", s),
-            CalculatorError::MissingVarEquals => write!(f, "Error: Missing \"=\" after variable name"),
-            CalculatorError::ParseNumberErrror => write!(f, "Error: Invalid number")
+            CalculatorError::UnknownSymbol(s) => {
+                write!(f, "Error: Could not find symbol \"{}\"", s)
+            }
+            CalculatorError::MissingVarEquals => {
+                write!(f, "Error: Missing \"=\" after variable name")
+            }
+            CalculatorError::ParseNumberErrror => write!(f, "Error: Invalid number"),
         }
     }
 }
@@ -32,24 +35,31 @@ pub fn calculate(input: &str, log: &Log) -> String {
     let mut expression = input.replace(' ', "");
 
     // Return nothing if given nothing
-    if expression.is_empty() { return String::from("...") }
+    if expression.is_empty() {
+        return String::from("...");
+    }
 
     // check for and remove any variable assignment
-    if expression.chars().next().expect("Previously checked if string was empty") == '#' {
-            // Find index of '=' (signifies the end of the variable name) or throw an error
-            let var_end = match expression.find('=') {
-                Some(i) => i,
-                None => return String::from("Error: Missing \"=\" after variable name")
-            };
+    if expression
+        .chars()
+        .next()
+        .expect("Previously checked if string was empty")
+        == '#'
+    {
+        // Find index of '=' (signifies the end of the variable name) or throw an error
+        let var_end = match expression.find('=') {
+            Some(i) => i,
+            None => return String::from("Error: Missing \"=\" after variable name"),
+        };
 
-            // Remove var from expression so as to not confuse parse()
-            expression.drain(..=var_end);
+        // Remove var from expression so as to not confuse parse()
+        expression.drain(..=var_end);
     }
 
     // Parse and return output
     match parse(expression.chars(), log) {
         Ok(n) => " = ".to_owned() + &n.to_string(),
-        Err(e) => e.to_string()
+        Err(e) => e.to_string(),
     }
 }
 
@@ -59,15 +69,21 @@ pub fn calculate_assign(input: &str, log: &mut Log) -> String {
     let mut expression = input.replace(' ', "");
 
     // Return nothing if given nothing
-    if expression.is_empty() { return String::from("...") }
+    if expression.is_empty() {
+        return String::from("...");
+    }
 
     // Check if we need to assign to a variable
-    let assigning_to: Option<String> = match expression.chars().next().expect("Previously checked if string was empty") {
+    let assigning_to: Option<String> = match expression
+        .chars()
+        .next()
+        .expect("Previously checked if string was empty")
+    {
         '#' => {
             // Find index of '=' (signifies the end of the variable name) or throw an error
             let var_end = match expression.find('=') {
                 Some(i) => i - 1, // we remove '#' separately
-                None => return String::from("Error: Missing \"=\" after variable name")
+                None => return String::from("Error: Missing \"=\" after variable name"),
             };
 
             // Remove var from expression so as to not confuse parse()
@@ -77,7 +93,7 @@ pub fn calculate_assign(input: &str, log: &mut Log) -> String {
 
             Some(var_name)
         }
-        _ => None
+        _ => None,
     };
 
     let result = parse(expression.chars(), &log);
@@ -90,13 +106,14 @@ pub fn calculate_assign(input: &str, log: &mut Log) -> String {
     // Parse and return output
     match result {
         Ok(n) => " = ".to_owned() + &n.to_string(),
-        Err(e) => e.to_string()
+        Err(e) => e.to_string(),
     }
-
 }
 
-fn parse<T: Iterator<Item = char> + Clone>(mut input: T, log: &Log) -> Result<NumType, CalculatorError> {
-
+fn parse<T: Iterator<Item = char> + Clone>(
+    mut input: T,
+    log: &Log,
+) -> Result<NumType, CalculatorError> {
     // Exponents and functions are instantly evaluated, they do not need a buffer
     // Multiplication/division buffer:
     let mut m_buffer = buffers::MultiplicationBuffer::default();
@@ -113,31 +130,27 @@ fn parse<T: Iterator<Item = char> + Clone>(mut input: T, log: &Log) -> Result<Nu
             // Check for parantheses, meaning we need to recursively call parse()
             // Place the result in the multiplication buffer
             '(' => {
-                m_buffer.push(
-                    parse(input
+                m_buffer.push(parse(
+                    input
                         .by_ref()
                         .take_while(|c| *c != ')')
                         .collect::<Vec<char>>()
                         .iter()
                         .cloned(),
-                        log
-                    )?
-                );
+                    log,
+                )?);
 
                 previous_number = true; // () expressions are treated as a single number after evaluation
             }
 
             // Check if we are making a vector type, put it into the multiplication buffer
             '[' => {
-
                 previous_number = true;
             }
 
             // Check for a number, put it into the multiplication buffer
             '0'..='9' | '.' => {
-                m_buffer.push(
-                    NumType::Scalar(parse_chars_to_f64(c, &mut input)?)
-                );
+                m_buffer.push(NumType::Scalar(parse_chars_to_f64(c, &mut input)?));
 
                 previous_number = true;
             }
@@ -173,41 +186,42 @@ fn parse<T: Iterator<Item = char> + Clone>(mut input: T, log: &Log) -> Result<Nu
             // Else, it must be some sort of symbol
             // Variables go in the multiplication buffer
             // Function outputs go in the multiplication buffer, but need some work first
-            // Symbol names are made up of only ascii alphabetic chars 
+            // Symbol names are made up of only ascii alphabetic chars
             // Numbers cannot be used in symbol names or it would not be possible to differentiate symbol then number from one symbol
             'A'..='Z' | 'a'..='z' => {
-                let name: String = c.to_string() + &(input.take_while_ref(|c| c.is_ascii_alphabetic()).collect::<String>());
+                let name: String = c.to_string()
+                    + &(input
+                        .take_while_ref(|c| c.is_ascii_alphabetic())
+                        .collect::<String>());
                 match log.search_symbol(&name) {
                     Some(Variable(n)) => m_buffer.push(n.clone()),
                     Some(Function) => {} // TODO: Implement functions
-                    None => return Err(CalculatorError::UnknownSymbol(name))
+                    None => return Err(CalculatorError::UnknownSymbol(name)),
                 }
             }
 
             // otherwise ignore, calc has no clue what to do with this symbol
             _ => {}
         }
-    };
+    }
 
     a_buffer.push(m_buffer.collapse());
     Ok(a_buffer.collapse())
 }
 
 // Turns the character iterator into a float or throws an error
-fn parse_chars_to_f64<T: Iterator<Item = char> + Clone>(first: char, iter: &mut T) -> Result<f64, CalculatorError> {
-    if let Ok(f) = (
-        first.to_string() + &(
-            iter
+fn parse_chars_to_f64<T: Iterator<Item = char> + Clone>(
+    first: char,
+    iter: &mut T,
+) -> Result<f64, CalculatorError> {
+    if let Ok(f) = (first.to_string()
+        + &(iter
             .take_while_ref(|c| *c == '.' || ('0'..='9').contains(c))
-            .collect::<String>()
-        )
-    )
-    .parse()
+            .collect::<String>()))
+        .parse()
     {
         Ok(f)
-    }
-    else
-    {
+    } else {
         Err(CalculatorError::ParseNumberErrror)
     }
 }
