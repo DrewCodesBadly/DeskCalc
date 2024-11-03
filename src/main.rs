@@ -1,5 +1,4 @@
 use core::f32;
-
 use eframe::{run_native, App, CreationContext, NativeOptions};
 use egui::{CentralPanel, Id, Label, Layout, RichText, TextEdit, TopBottomPanel};
 use log::Log;
@@ -11,12 +10,15 @@ mod log;
 struct DeskCalc {
     input_text: String,
     out: String,
-    log: log::Log
+    log: Log
 }
 
 impl DeskCalc {
     fn new(_cc: &CreationContext<'_>) -> Self {
-        Self::default()
+        DeskCalc {
+            log: Log::new(),
+            ..Default::default()
+        }
     }
 }
 
@@ -33,17 +35,17 @@ impl App for DeskCalc {
                     .frame(false)
                     .desired_width(f32::INFINITY)
                 );
-                if response.changed() {
-                    // Calculate output given response and set output buffer
-                    // Errors are mapped to a string representation which still goes in the output buffer
-                    self.out = " = ".to_owned() + &calculator::calculate(&self.input_text).unwrap_or_else(|e| {
-                        e.as_string()
-                    });
-                }
                 if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    self.out = calculator::calculate_assign(&self.input_text, &mut self.log);
                     self.log.push_results(&self.input_text, &self.out);
                     self.input_text.clear();
                     self.out.clear();
+
+                    // Move focus back to text input
+                    response.request_focus();
+                } else if response.changed() {
+                    // Calculate output given response and set output buffer
+                    self.out = calculator::calculate(&self.input_text, &self.log);
                 }
 
                 ui.with_layout(Layout::right_to_left(egui::Align::Max), |ui| {
@@ -54,6 +56,7 @@ impl App for DeskCalc {
                 });
             });
         
+
         // Add TopBottomPanel for menu here
 
         CentralPanel::default().show(ctx, |ui| {

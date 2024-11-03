@@ -1,6 +1,7 @@
 use std::{fmt::Display, ops::{Add, Div, Mul, Neg}};
 
 // enum containing different types of numbers the calculator may handle
+#[derive(Clone)]
 pub enum NumType {
     Scalar(f64)
 }
