@@ -17,6 +17,14 @@ pub fn get_default_functions_hashmap(
 ) -> HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>> {
     let mut f: HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>> =
         HashMap::new();
+
+    /*
+    Bunch of function additions here
+    They are all if let statements which attempt to get the needed parameters from the input vector
+    Extra parameters are simply ignored (could maybe be used for overloads?)
+    The actual function happens in the body of the if let statement
+    Else, it will return a missing parameters error
+    */
     f.insert(String::from("sin"), |v| {
         if let Some(Scalar(n)) = v.get(0) {
             Ok(Scalar(n.sin()))
@@ -116,7 +124,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("log"), |v| {
-        if let Some([Scalar(s), Scalar(b)]) = v.get(0..1) {
+        if let Some([Scalar(s), Scalar(b)]) = v.get(0..=1) {
             Ok(Scalar(s.log(*b)))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(

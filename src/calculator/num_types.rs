@@ -4,7 +4,7 @@ use std::{
 };
 
 // enum containing different types of numbers the calculator may handle
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum NumType {
     Scalar(f64),
 }

@@ -206,9 +206,7 @@ fn parse<T: Iterator<Item = char> + Clone>(
                         .collect::<String>());
                 match log.search_symbol(&name) {
                     Some(Variable(n)) => e_buffer.push(n.clone()),
-                    Some(DefaultFn(f)) => {
-                        // TODO: Implement functions
-                    }
+                    Some(DefaultFn(f)) => e_buffer.push(f(get_function_params(&mut input, log)?)?),
                     Some(UserFn) => {} // TODO: Implement user functions
                     None => return Err(CalculatorError::UnknownSymbol(name)),
                 }
@@ -239,6 +237,25 @@ fn parse_chars_to_f64<T: Iterator<Item = char> + Clone>(
     } else {
         Err(CalculatorError::ParseNumberErrror)
     }
+}
+
+fn get_function_params<T: Iterator<Item = char> + Clone>(
+    iter: &mut T,
+    log: &Log,
+) -> Result<Vec<NumType>, CalculatorError> {
+    // Vector we will return when finished
+    let mut v: Vec<NumType> = Vec::new();
+
+    // Collect the entire function input into a string and separate by commas
+    let params_string: String = iter.take_while(|c| *c != ')').collect();
+    for s in params_string.split(',') {
+        // Parse each section as separated by commas
+        // Push the resulting NumType into the vector and propagate errors
+        v.push(parse(s.chars(), log)?);
+    }
+
+    println!("{:?}", v);
+    Ok(v)
 }
 
 #[cfg(test)]

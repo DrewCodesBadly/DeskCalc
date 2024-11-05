@@ -9,7 +9,7 @@ pub mod symbol_type;
 
 #[derive(Default)]
 pub struct Log {
-    pub commands: Vec<(String, String)>,
+    pub history: Vec<(String, String)>,
     vars: HashMap<String, NumType>,
     consts: HashMap<String, NumType>,
     default_functions: HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>>,
@@ -25,7 +25,7 @@ impl Log {
     }
 
     pub fn push_results(&mut self, input: &str, output: &str) {
-        self.commands.push((input.to_owned(), output.to_owned()))
+        self.history.push((input.to_owned(), output.to_owned()))
     }
 
     pub fn add_var(&mut self, name: String, val: &NumType) {
@@ -33,7 +33,7 @@ impl Log {
     }
 
     pub fn clear_commands(&mut self) {
-        self.commands.clear();
+        self.history.clear();
     }
 
     pub fn clear_vars(&mut self) {
@@ -42,20 +42,22 @@ impl Log {
 
     pub fn clear(&mut self) {
         self.vars.clear();
-        self.commands.clear();
+        self.history.clear();
     }
 
     pub fn search_symbol(&self, symbol: &str) -> Option<SymbolType> {
         // Try every base of symbols
-        // First try vars
-        if let Some(s) = self.vars.get(symbol) {
+        // First try consts
+        if let Some(s) = self.consts.get(symbol) {
             Some(Variable(s))
-        } else if let Some(s) = self.consts.get(symbol) {
-            // Then try constants
+        } else if let Some(s) = self.vars.get(symbol) {
+            // Then try vars
             Some(Variable(s))
         } else if let Some(f) = self.default_functions.get(symbol) {
+            // Then try built in functions
             Some(DefaultFn(*f))
         } else {
+            // Otherwise there is no such symbol
             None
         }
     }

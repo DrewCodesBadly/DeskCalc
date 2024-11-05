@@ -75,3 +75,19 @@ fn exponents_order() {
     let result = calculate("3 + 2^3*4/2 - 1", &log);
     assert_eq!(result, " = 18");
 }
+
+#[test]
+fn default_funcs() {
+    let log = Log::new();
+    // Not terminating parantheses after a function should just cause it to accept everything
+    // should be 1 + (2 * 1) = 3
+    let result = calculate("sin(PI/2) + abs(-2) * sin(PI/2", &log);
+    assert_eq!(result, " = 3")
+}
+
+#[test]
+fn multiple_fn_args() {
+    let log = Log::new();
+    let result = calculate("log(10, 5+5", &log);
+    assert_eq!(result, " = 1")
+}
