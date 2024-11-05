@@ -74,3 +74,12 @@ impl Display for NumType {
         }
     }
 }
+
+// Exponents and more
+impl NumType {
+    pub fn pow(self, n: &NumType) -> NumType {
+        match (self, n) {
+            (Scalar(b), Scalar(e)) => Scalar(b.powf(*e)),
+        }
+    }
+}

@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use super::num_types::NumType;
 use NumType::*;
 
@@ -11,8 +13,30 @@ pub struct AdditionBuffer {
     numbers: Vec<NumType>,
 }
 
+#[derive(Default)]
+pub struct ExponentBuffer {
+    numbers: VecDeque<NumType>,
+}
+
 pub trait Collapse {
     fn collapse(&mut self) -> NumType;
+}
+
+impl Collapse for ExponentBuffer {
+    fn collapse(&mut self) -> NumType {
+        match self.numbers.len() {
+            0 => Scalar(1.0),
+            1 => self.numbers.pop_front().unwrap(),
+            _ => {
+                let mut total = self.numbers.pop_front().unwrap();
+                for n in self.numbers.iter() {
+                    total = total.pow(n);
+                }
+                self.numbers.clear();
+                total
+            }
+        }
+    }
 }
 
 impl Collapse for MultiplicationBuffer {
@@ -52,5 +76,10 @@ impl MultiplicationBuffer {
         } else {
             self.numbers.push(n);
         }
+    }
+}
+impl ExponentBuffer {
+    pub fn push(&mut self, n: NumType) {
+        self.numbers.push_back(n);
     }
 }

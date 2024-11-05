@@ -61,3 +61,17 @@ fn consts() {
     let result = calculate("PI", &log);
     assert_eq!(result, " = ".to_string() + &PI.to_string());
 }
+
+#[test]
+fn exponents() {
+    let log = Log::new();
+    let result = calculate("3 ^ 3", &log);
+    assert_eq!(result, " = 27");
+}
+
+#[test]
+fn exponents_order() {
+    let log = Log::new();
+    let result = calculate("3 + 2^3*4/2 - 1", &log);
+    assert_eq!(result, " = 18");
+}

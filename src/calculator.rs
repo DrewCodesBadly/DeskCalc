@@ -1,7 +1,7 @@
 mod buffers;
 pub mod num_types;
 
-use crate::log::symbol_type::SymbolType::{self, *};
+use crate::log::symbol_type::SymbolType::*;
 use crate::log::Log;
 use buffers::Collapse;
 use itertools::Itertools;
@@ -11,8 +11,8 @@ use std::{clone::Clone, fmt::Display};
 #[derive(Debug, Clone)]
 pub enum CalculatorError {
     UnknownSymbol(String),
-    MissingVarEquals,
     ParseNumberErrror,
+    MissingFunctionParameters(String),
 }
 
 impl Display for CalculatorError {
@@ -21,18 +21,22 @@ impl Display for CalculatorError {
             CalculatorError::UnknownSymbol(s) => {
                 write!(f, "Error: Could not find symbol \"{}\"", s)
             }
-            CalculatorError::MissingVarEquals => {
-                write!(f, "Error: Missing \"=\" after variable name")
-            }
             CalculatorError::ParseNumberErrror => write!(f, "Error: Invalid number"),
+            CalculatorError::MissingFunctionParameters(s) => {
+                write!(
+                    f,
+                    "Error: Function \"{}\" has missing or invalid parameters",
+                    s
+                )
+            }
         }
     }
 }
 
 // Parses an input string to calculate the output
 pub fn calculate(input: &str, log: &Log) -> String {
-    // remove any whitespace at all from the string
-    let mut expression = input.replace(' ', "");
+    // Removes any whitespace at all from the string and make it lowercase
+    let mut expression = input.replace(' ', "").to_ascii_lowercase();
 
     // Return nothing if given nothing
     if expression.is_empty() {
@@ -66,7 +70,7 @@ pub fn calculate(input: &str, log: &Log) -> String {
 // Like calculate but will actually try to assign the final value to a variable if one is provided
 pub fn calculate_assign(input: &str, log: &mut Log) -> String {
     // Remove any whitespace at all from the string
-    let mut expression = input.replace(' ', "");
+    let mut expression = input.replace(' ', "").to_ascii_lowercase();
 
     // Return nothing if given nothing
     if expression.is_empty() {
@@ -114,7 +118,8 @@ fn parse<T: Iterator<Item = char> + Clone>(
     mut input: T,
     log: &Log,
 ) -> Result<NumType, CalculatorError> {
-    // Exponents and functions are instantly evaluated, they do not need a buffer
+    // Exponent buffer
+    let mut e_buffer = buffers::ExponentBuffer::default();
     // Multiplication/division buffer:
     let mut m_buffer = buffers::MultiplicationBuffer::default();
     // Addition/subtraction buffer:
@@ -130,7 +135,7 @@ fn parse<T: Iterator<Item = char> + Clone>(
             // Check for parantheses, meaning we need to recursively call parse()
             // Place the result in the multiplication buffer
             '(' => {
-                m_buffer.push(parse(
+                e_buffer.push(parse(
                     input
                         .by_ref()
                         .take_while(|c| *c != ')')
@@ -150,7 +155,7 @@ fn parse<T: Iterator<Item = char> + Clone>(
 
             // Check for a number, put it into the multiplication buffer
             '0'..='9' | '.' => {
-                m_buffer.push(NumType::Scalar(parse_chars_to_f64(c, &mut input)?));
+                e_buffer.push(NumType::Scalar(parse_chars_to_f64(c, &mut input)?));
 
                 previous_number = true;
             }
@@ -158,15 +163,20 @@ fn parse<T: Iterator<Item = char> + Clone>(
             // Check for operators
             // '*' doesn't really do anything since numbers already go in multiplication buffer
             '*' => {
+                m_buffer.push(e_buffer.collapse());
+
                 previous_number = false;
             }
             // '/' only sets the multiplication buffer to take the reciprocal of the next number
             '/' => {
+                m_buffer.push(e_buffer.collapse());
                 m_buffer.dividing = true;
+
                 previous_number = false;
             }
             // '+' collapses the multiplication buffer into the addition buffer
             '+' => {
+                m_buffer.push(e_buffer.collapse());
                 a_buffer.push(m_buffer.collapse());
                 previous_number = false;
             }
@@ -175,6 +185,7 @@ fn parse<T: Iterator<Item = char> + Clone>(
                 // Only collapse the multiplication buffer if the last thing was a number
                 // If it was an operator this is unary minus not subtraction
                 if previous_number {
+                    m_buffer.push(e_buffer.collapse());
                     a_buffer.push(m_buffer.collapse());
                     previous_number = false;
                 }
@@ -194,8 +205,11 @@ fn parse<T: Iterator<Item = char> + Clone>(
                         .take_while_ref(|c| c.is_ascii_alphabetic())
                         .collect::<String>());
                 match log.search_symbol(&name) {
-                    Some(Variable(n)) => m_buffer.push(n.clone()),
-                    Some(Function) => {} // TODO: Implement functions
+                    Some(Variable(n)) => e_buffer.push(n.clone()),
+                    Some(DefaultFn(f)) => {
+                        // TODO: Implement functions
+                    }
+                    Some(UserFn) => {} // TODO: Implement user functions
                     None => return Err(CalculatorError::UnknownSymbol(name)),
                 }
             }
@@ -205,6 +219,7 @@ fn parse<T: Iterator<Item = char> + Clone>(
         }
     }
 
+    m_buffer.push(e_buffer.collapse());
     a_buffer.push(m_buffer.collapse());
     Ok(a_buffer.collapse())
 }

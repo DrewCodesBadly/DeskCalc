@@ -1,4 +1,5 @@
 use crate::calculator::num_types::NumType;
+use crate::calculator::CalculatorError;
 use std::collections::HashMap;
 use symbol_type::SymbolType;
 use symbol_type::SymbolType::*;
@@ -11,12 +12,14 @@ pub struct Log {
     pub commands: Vec<(String, String)>,
     vars: HashMap<String, NumType>,
     consts: HashMap<String, NumType>,
+    default_functions: HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>>,
 }
 
 impl Log {
     pub fn new() -> Self {
         Log {
             consts: built_in::get_constants_hashmap(),
+            default_functions: built_in::get_default_functions_hashmap(),
             ..Default::default()
         }
     }
@@ -50,6 +53,8 @@ impl Log {
         } else if let Some(s) = self.consts.get(symbol) {
             // Then try constants
             Some(Variable(s))
+        } else if let Some(f) = self.default_functions.get(symbol) {
+            Some(DefaultFn(*f))
         } else {
             None
         }
