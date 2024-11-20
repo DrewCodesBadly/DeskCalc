@@ -13,6 +13,7 @@ pub enum CalculatorError {
     UnknownSymbol(String),
     ParseNumberErrror,
     MissingFunctionParameters(String),
+    InvalidCommand(String),
 }
 
 impl Display for CalculatorError {
@@ -29,6 +30,9 @@ impl Display for CalculatorError {
                     s
                 )
             }
+            CalculatorError::InvalidCommand(s) => {
+                write!(f, "Error: Command \"{}\" not recognized", s)
+            }
         }
     }
 }
@@ -44,20 +48,31 @@ pub fn calculate(input: &str, log: &Log) -> String {
     }
 
     // check for and remove any variable assignment
-    if expression
+    match expression
         .chars()
         .next()
         .expect("Previously checked if string was empty")
-        == '#'
     {
         // Find index of '=' (signifies the end of the variable name) or throw an error
-        let var_end = match expression.find('=') {
-            Some(i) => i,
-            None => return String::from("Error: Missing \"=\" after variable name"),
-        };
+        '#' => {
+            let var_end = match expression.find('=') {
+                Some(i) => i,
+                None => return String::from("Error: Missing \"=\" after variable name"),
+            };
 
-        // Remove var from expression so as to not confuse parse()
-        expression.drain(..=var_end);
+            // Remove var from expression so as to not confuse parse()
+            expression.drain(..=var_end);
+        }
+        // Handles commands - we won't run them yet though
+        '/' => {
+            expression.remove(0);
+            let name: String = expression.drain(..).collect();
+            match log.search_command(&name) {
+                Some(_) => return String::from("Enter to run command..."),
+                None => return CalculatorError::InvalidCommand(name).to_string(),
+            }
+        }
+        _ => {}
     }
 
     // Parse and return output
@@ -96,6 +111,15 @@ pub fn calculate_assign(input: &str, log: &mut Log) -> String {
             expression.remove(0); // remove '=' separately, not part of var name
 
             Some(var_name)
+        }
+        // Handles commands - now, we will run them
+        '/' => {
+            expression.remove(0);
+            let name: String = expression.drain(..).collect();
+            match log.search_command(&name) {
+                Some(f) => return f(log),
+                None => return CalculatorError::InvalidCommand(name).to_string(),
+            }
         }
         _ => None,
     };

@@ -4,6 +4,8 @@ use crate::calculator::CalculatorError;
 use std::collections::HashMap;
 use std::f64::consts::{E, PI, TAU};
 
+use super::Log;
+
 pub fn get_constants_hashmap() -> HashMap<String, NumType> {
     let mut c: HashMap<String, NumType> = HashMap::new();
     c.insert(String::from("pi"), Scalar(PI));
@@ -152,4 +154,22 @@ pub fn get_default_functions_hashmap(
     });
 
     f
+}
+
+pub fn get_default_commands_hashmap() -> HashMap<String, fn(&mut Log) -> String> {
+    let mut c: HashMap<String, fn(&mut Log) -> String> = HashMap::new();
+    c.insert(String::from("clear"), |l| {
+        l.clear();
+        String::from("All data cleared")
+    });
+    c.insert(String::from("clearvars"), |l| {
+        l.clear_vars();
+        String::from("Variable data cleared")
+    });
+    c.insert(String::from("clearhistory"), |l| {
+        l.clear_history();
+        String::from("Calculator history cleared")
+    });
+
+    c
 }

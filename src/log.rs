@@ -13,6 +13,7 @@ pub struct Log {
     vars: HashMap<String, NumType>,
     consts: HashMap<String, NumType>,
     default_functions: HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>>,
+    commands: HashMap<String, fn(&mut Log) -> String>,
 }
 
 impl Log {
@@ -20,6 +21,7 @@ impl Log {
         Log {
             consts: built_in::get_constants_hashmap(),
             default_functions: built_in::get_default_functions_hashmap(),
+            commands: built_in::get_default_commands_hashmap(),
             ..Default::default()
         }
     }
@@ -32,7 +34,7 @@ impl Log {
         self.vars.insert(name, val.to_owned());
     }
 
-    pub fn clear_commands(&mut self) {
+    pub fn clear_history(&mut self) {
         self.history.clear();
     }
 
@@ -60,5 +62,9 @@ impl Log {
             // Otherwise there is no such symbol
             None
         }
+    }
+
+    pub fn search_command(&self, name: &str) -> Option<fn(&mut Log) -> String> {
+        self.commands.get(name).copied()
     }
 }
