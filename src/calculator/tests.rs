@@ -2,6 +2,7 @@ use std::f64::consts::PI;
 
 use super::*;
 use crate::log::Log;
+use NumType::*;
 
 // test calc functions
 
@@ -90,4 +91,11 @@ fn multiple_fn_args() {
     let log = Log::new();
     let result = calculate("log(10, 5+5", &log);
     assert_eq!(result, " = 1")
+}
+
+#[test]
+fn vector_math() {
+    assert_eq!(Vector(vec![1.0, 1.0]) * Scalar(2.0), Vector(vec![2.0, 2.0]));
+    assert_eq!(Vector(vec![1.0, 1.0]) + Scalar(2.0), Vector(vec![3.0, 3.0]));
+    assert_eq!(Vector(vec![1.0, 1.0]) * Vector(vec![1.0, 2.0]), Vector(vec![1.0, 2.0]));
 }

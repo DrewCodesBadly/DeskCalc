@@ -85,6 +85,7 @@ pub fn get_default_functions_hashmap(
         if let Some(n) = v.get(0) {
             match n {
                 Scalar(s) => Ok(Scalar(s.abs())),
+                Vector(v) => Ok(Vector(v.iter().map(|f| f.abs()).collect())),
             }
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -96,6 +97,7 @@ pub fn get_default_functions_hashmap(
         if let Some(n) = v.get(0) {
             match n {
                 Scalar(s) => Ok(Scalar(s.round())),
+                Vector(v) => Ok(Vector(v.iter().map(|f| f.round()).collect())),
             }
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -107,6 +109,7 @@ pub fn get_default_functions_hashmap(
         if let Some(n) = v.get(0) {
             match n {
                 Scalar(s) => Ok(Scalar(s.ceil())),
+                Vector(v) => Ok(Vector(v.iter().map(|f| f.ceil()).collect())),
             }
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -118,6 +121,7 @@ pub fn get_default_functions_hashmap(
         if let Some(n) = v.get(0) {
             match n {
                 Scalar(s) => Ok(Scalar(s.floor())),
+                Vector(v) => Ok(Vector(v.iter().map(|f| f.floor()).collect())),
             }
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
