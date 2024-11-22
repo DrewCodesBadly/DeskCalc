@@ -157,6 +157,19 @@ pub fn get_default_functions_hashmap(
         }
     });
 
+    // Vector functions start here
+    f.insert(String::from("mag"), |v| {
+        if let Some(Vector(v)) = v.get(0) {
+            Ok(Scalar(
+                v.iter().fold(0.0, |acc, n| acc + n.powf(2.0)).sqrt(),
+            ))
+        } else {
+            Err(CalculatorError::MissingFunctionParameters(String::from(
+                "mag",
+            )))
+        }
+    });
+
     f
 }
 

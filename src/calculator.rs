@@ -14,6 +14,7 @@ pub enum CalculatorError {
     ParseNumberErrror,
     MissingFunctionParameters(String),
     InvalidCommand(String),
+    RecursiveVectors,
 }
 
 impl Display for CalculatorError {
@@ -32,6 +33,9 @@ impl Display for CalculatorError {
             }
             CalculatorError::InvalidCommand(s) => {
                 write!(f, "Error: Command \"{}\" not recognized", s)
+            }
+            CalculatorError::RecursiveVectors => {
+                write!(f, "Error: Vectors may not contain other vectors")
             }
         }
     }
@@ -172,12 +176,14 @@ fn parse<T: Iterator<Item = char> + Clone>(
                 previous_number = true; // () expressions are treated as a single number after evaluation
             }
 
-            // Check if we are making a vector type, put it into the multiplication buffer
+            // Check if we are making a vector type, put it into the exponent buffer
             '[' => {
+                e_buffer.push(parse_to_vec(input.by_ref().take_while(|c| *c != ']'), log)?);
+
                 previous_number = true;
             }
 
-            // Check for a number, put it into the multiplication buffer
+            // Check for a number, put it into the exponent buffer
             '0'..='9' | '.' => {
                 e_buffer.push(NumType::Scalar(parse_chars_to_f64(c, &mut input)?));
 
@@ -185,7 +191,6 @@ fn parse<T: Iterator<Item = char> + Clone>(
             }
 
             // Check for operators
-            // '*' doesn't really do anything since numbers already go in multiplication buffer
             '*' => {
                 m_buffer.push(e_buffer.collapse());
 
@@ -219,8 +224,6 @@ fn parse<T: Iterator<Item = char> + Clone>(
             }
 
             // Else, it must be some sort of symbol
-            // Variables go in the multiplication buffer
-            // Function outputs go in the multiplication buffer, but need some work first
             // Symbol names are made up of only ascii alphabetic chars
             // Numbers cannot be used in symbol names or it would not be possible to differentiate symbol then number from one symbol
             'A'..='Z' | 'a'..='z' => {
@@ -263,6 +266,40 @@ fn parse_chars_to_f64<T: Iterator<Item = char> + Clone>(
     }
 }
 
+// Parses a character iterator of numbers separated by commas to a NumType::Vector
+// Vectors may contain vectors. This is a feature because it can be so why not
+fn parse_to_vec<T: Iterator<Item = char>>(
+    mut iter: T,
+    log: &Log,
+) -> Result<NumType, CalculatorError> {
+    let mut v = Vec::<f64>::new();
+    let mut num_string = String::new();
+    while let Some(c) = iter.next() {
+        if c == ',' {
+            // Parse string to a number and push it into the vector, then clear
+            if let Some(n) = parse(num_string.chars(), log)?.scalar_value() {
+                v.push(n);
+            } else {
+                return Err(CalculatorError::RecursiveVectors);
+            };
+            num_string.clear()
+        } else {
+            // keep adding characters to the number
+            num_string.push(c);
+        }
+    }
+
+    // include the last number too
+    if let Some(n) = parse(num_string.chars(), log)?.scalar_value() {
+        v.push(n);
+    } else {
+        return Err(CalculatorError::RecursiveVectors);
+    };
+
+    Ok(NumType::Vector(v))
+}
+
+// TODO: FIX!
 fn get_function_params<T: Iterator<Item = char> + Clone>(
     iter: &mut T,
     log: &Log,

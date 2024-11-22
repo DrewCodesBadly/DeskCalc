@@ -97,5 +97,21 @@ fn multiple_fn_args() {
 fn vector_math() {
     assert_eq!(Vector(vec![1.0, 1.0]) * Scalar(2.0), Vector(vec![2.0, 2.0]));
     assert_eq!(Vector(vec![1.0, 1.0]) + Scalar(2.0), Vector(vec![3.0, 3.0]));
-    assert_eq!(Vector(vec![1.0, 1.0]) * Vector(vec![1.0, 2.0]), Vector(vec![1.0, 2.0]));
+    assert_eq!(
+        Vector(vec![1.0, 1.0]) * Vector(vec![1.0, 2.0]),
+        Vector(vec![1.0, 2.0])
+    );
+}
+
+#[test]
+fn vector_calculating() {
+    let log = Log::new();
+    assert_eq!(calculate("[1, 1] + [2, 1]", &log), " = [3, 2]");
+    assert_eq!(calculate("[1, 1] * 3", &log), " = [3, 3]");
+}
+
+#[test]
+fn magnitude() {
+    let log = Log::new();
+    assert_eq!(calculate("mag([4, 3])", &log), " = 5");
 }

@@ -116,7 +116,7 @@ impl Display for NumType {
             Vector(v) => {
                 write!(
                     f,
-                    "{}",
+                    "[{}]",
                     v.iter()
                         .map(|f| f.to_string())
                         .collect::<Vec<String>>()
@@ -145,5 +145,12 @@ impl NumType {
                 )
             }
         }
+    }
+
+    pub fn scalar_value(self) -> Option<f64> {
+        return match self {
+            Scalar(s) => Some(s),
+            Vector(_) => None,
+        };
     }
 }
