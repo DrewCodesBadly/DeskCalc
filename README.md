@@ -20,7 +20,8 @@ Designed for keyboard use - just type expressions and instantly see results.
 - Stored variables can be cleared with the /clearvars command or /clear to include other things
 - functions wip
 ## Vectors
-- wip
 - Vectors can be created using square brackets (e.x. [1, 2, 3])
 - Support operators +, -, /, *, ^, just like scalars, works with either vector or scalar to right
+- Individual components can be accessed using . followed by x, y, z, or a number (vectors are 0-indexed)
 - Built in functions include (WIP):
+    - mag() - takes the magnitude of the vector

@@ -15,6 +15,8 @@ pub enum CalculatorError {
     MissingFunctionParameters(String),
     InvalidCommand(String),
     RecursiveVectors,
+    ComponentAccessError,
+    ComponentDNE,
 }
 
 impl Display for CalculatorError {
@@ -36,6 +38,12 @@ impl Display for CalculatorError {
             }
             CalculatorError::RecursiveVectors => {
                 write!(f, "Error: Vectors may not contain other vectors")
+            }
+            CalculatorError::ComponentAccessError => {
+                write!(f, "Error: Cannot access components of a scalar value")
+            }
+            CalculatorError::ComponentDNE => {
+                write!(f, "Error: Component does not exist")
             }
         }
     }
@@ -179,14 +187,47 @@ fn parse<T: Iterator<Item = char> + Clone>(
             // Check if we are making a vector type, put it into the exponent buffer
             '[' => {
                 e_buffer.push(parse_to_vec(input.by_ref().take_while(|c| *c != ']'), log)?);
-
                 previous_number = true;
             }
 
-            // Check for a number, put it into the exponent buffer
-            '0'..='9' | '.' => {
-                e_buffer.push(NumType::Scalar(parse_chars_to_f64(c, &mut input)?));
+            // Check for '.' accessing a vector - if no vec, then assume this is a decimal w/o leading 0
+            // jank
+            '.' => {
+                if previous_number {
+                    if let Some(NumType::Vector(v)) = e_buffer.get_back().cloned() {
+                        // Remove last element, replace it with the component we're accessing
+                        e_buffer.remove_back();
+                        // Determine index from characters following '.'
+                        let index: usize = match input.next().unwrap_or('x') {
+                            'x' => 0,
+                            'y' => 1,
+                            'z' => 2,
+                            c => {
+                                let mut s = String::new();
+                                s.push(c);
+                                input
+                                    .take_while_ref(|c| ('0'..='9').contains(c))
+                                    .for_each(|c| s.push(c));
+                                s.parse()
+                                    .map_err(|_| CalculatorError::ComponentAccessError)?
+                            }
+                        };
+                        e_buffer.push(match v.get(index) {
+                            Some(f) => NumType::Scalar(*f),
+                            None => return Err(CalculatorError::ComponentDNE),
+                        });
+                    } else {
+                        return Err(CalculatorError::ComponentAccessError);
+                    }
+                } else {
+                    e_buffer.push(NumType::Scalar(parse_chars_to_f64(c, &mut input)?));
+                    previous_number = true;
+                }
+            }
 
+            // Check for a number, put it into the exponent buffer
+            '0'..='9' => {
+                e_buffer.push(NumType::Scalar(parse_chars_to_f64(c, &mut input)?));
                 previous_number = true;
             }
 
@@ -308,14 +349,25 @@ fn get_function_params<T: Iterator<Item = char> + Clone>(
     let mut v: Vec<NumType> = Vec::new();
 
     // Collect the entire function input into a string and separate by commas
-    let params_string: String = iter.take_while(|c| *c != ')').collect();
-    for s in params_string.split(',') {
-        // Parse each section as separated by commas
-        // Push the resulting NumType into the vector and propagate errors
+    let mut params = iter.take_while(|c| *c != ')');
+    while let Some(c) = params.next() {
+        let mut s = String::from(c);
+        let mut in_vector = false;
+        params
+            .by_ref()
+            .take_while(|c| {
+                if *c == '[' {
+                    in_vector = true;
+                } else if *c == ']' {
+                    in_vector = false;
+                }
+                in_vector || *c != ','
+            })
+            .for_each(|c| s.push(c));
         v.push(parse(s.chars(), log)?);
     }
 
-    println!("{:?}", v);
+    // println!("{:?}", v);
     Ok(v)
 }
 

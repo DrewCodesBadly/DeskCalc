@@ -26,7 +26,7 @@ impl Collapse for ExponentBuffer {
     fn collapse(&mut self) -> NumType {
         match self.numbers.len() {
             0 => Scalar(1.0),
-            1 => self.numbers.pop_front().unwrap(),
+            1 => self.numbers.pop_back().unwrap(),
             _ => {
                 let mut total = self.numbers.pop_front().unwrap();
                 for n in self.numbers.iter() {
@@ -81,5 +81,11 @@ impl MultiplicationBuffer {
 impl ExponentBuffer {
     pub fn push(&mut self, n: NumType) {
         self.numbers.push_back(n);
+    }
+    pub fn get_back(&self) -> Option<&NumType> {
+        self.numbers.back()
+    }
+    pub fn remove_back(&mut self) {
+        self.numbers.pop_back();
     }
 }

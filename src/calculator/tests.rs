@@ -115,3 +115,12 @@ fn magnitude() {
     let log = Log::new();
     assert_eq!(calculate("mag([4, 3])", &log), " = 5");
 }
+
+#[test]
+fn component_access() {
+    let log = Log::new();
+    assert_eq!(calculate("[3, 4, 5].x", &log), " = 3");
+    assert_eq!(calculate("[3, 4, 5].z", &log), " = 5");
+    assert_eq!(calculate("[3, 4, 5].0", &log), " = 3");
+    assert_eq!(calculate("[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].12", &log), " = 15");
+}
