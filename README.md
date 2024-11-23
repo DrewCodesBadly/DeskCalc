@@ -24,4 +24,4 @@ Designed for keyboard use - just type expressions and instantly see results.
 - Support operators +, -, /, *, ^, just like scalars, works with either vector or scalar to right
 - Individual components can be accessed using . followed by x, y, z, or a number (vectors are 0-indexed)
 - Built in functions include (WIP):
-    - mag() - takes the magnitude of the vector
+    - mag(vector) - takes the magnitude of the vector
