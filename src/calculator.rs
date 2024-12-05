@@ -6,7 +6,7 @@ use crate::log::Log;
 use buffers::Collapse;
 use itertools::Itertools;
 use num_types::NumType;
-use std::{clone::Clone, fmt::Display};
+use std::{clone::Clone, fmt::Display, mem};
 
 #[derive(Debug, Clone)]
 pub enum CalculatorError {
@@ -78,7 +78,7 @@ pub fn calculate(input: &str, log: &Log) -> String {
         // Handles commands - we won't run them yet though
         '/' => {
             expression.remove(0);
-            let name: String = expression.drain(..).collect();
+            let name: String = mem::take(&mut expression);
             match log.search_command(&name) {
                 Some(_) => return String::from("Enter to run command..."),
                 None => return CalculatorError::InvalidCommand(name).to_string(),
@@ -127,7 +127,7 @@ pub fn calculate_assign(input: &str, log: &mut Log) -> String {
         // Handles commands - now, we will run them
         '/' => {
             expression.remove(0);
-            let name: String = expression.drain(..).collect();
+            let name: String = mem::take(&mut expression);
             match log.search_command(&name) {
                 Some(f) => return f(log),
                 None => return CalculatorError::InvalidCommand(name).to_string(),
@@ -136,11 +136,11 @@ pub fn calculate_assign(input: &str, log: &mut Log) -> String {
         _ => None,
     };
 
-    let result = parse(expression.chars(), &log);
+    let result = parse(expression.chars(), log);
 
     // tbh not sure this is "correct" but it works
-    if result.is_ok() && assigning_to.is_some() {
-        log.add_var(assigning_to.unwrap(), result.as_ref().unwrap());
+    if let (Ok(n), Some(s)) = (&result, assigning_to) {
+        log.add_var(s, n);
     }
 
     // Parse and return output
@@ -206,7 +206,7 @@ fn parse<T: Iterator<Item = char> + Clone>(
                                 let mut s = String::new();
                                 s.push(c);
                                 input
-                                    .take_while_ref(|c| ('0'..='9').contains(c))
+                                    .take_while_ref(|c| c.is_ascii_digit())
                                     .for_each(|c| s.push(c));
                                 s.parse()
                                     .map_err(|_| CalculatorError::ComponentAccessError)?
@@ -297,7 +297,7 @@ fn parse_chars_to_f64<T: Iterator<Item = char> + Clone>(
 ) -> Result<f64, CalculatorError> {
     if let Ok(f) = (first.to_string()
         + &(iter
-            .take_while_ref(|c| *c == '.' || ('0'..='9').contains(c))
+            .take_while_ref(|c| *c == '.' || c.is_ascii_digit())
             .collect::<String>()))
         .parse()
     {
@@ -309,13 +309,10 @@ fn parse_chars_to_f64<T: Iterator<Item = char> + Clone>(
 
 // Parses a character iterator of numbers separated by commas to a NumType::Vector
 // Vectors may contain vectors. This is a feature because it can be so why not
-fn parse_to_vec<T: Iterator<Item = char>>(
-    mut iter: T,
-    log: &Log,
-) -> Result<NumType, CalculatorError> {
+fn parse_to_vec<T: Iterator<Item = char>>(iter: T, log: &Log) -> Result<NumType, CalculatorError> {
     let mut v = Vec::<f64>::new();
     let mut num_string = String::new();
-    while let Some(c) = iter.next() {
+    for c in iter {
         if c == ',' {
             // Parse string to a number and push it into the vector, then clear
             if let Some(n) = parse(num_string.chars(), log)?.scalar_value() {

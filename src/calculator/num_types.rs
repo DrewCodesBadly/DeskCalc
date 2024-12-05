@@ -112,7 +112,7 @@ impl Neg for NumType {
 impl Display for NumType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Scalar(s) => write!(f, "{}", s.to_string()),
+            Scalar(s) => write!(f, "{}", s),
             Vector(v) => {
                 write!(
                     f,
@@ -148,9 +148,9 @@ impl NumType {
     }
 
     pub fn scalar_value(self) -> Option<f64> {
-        return match self {
+        match self {
             Scalar(s) => Some(s),
             Vector(_) => None,
-        };
+        }
     }
 }

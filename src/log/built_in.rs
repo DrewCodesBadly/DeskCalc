@@ -6,6 +6,8 @@ use std::f64::consts::{E, PI, TAU};
 
 use super::Log;
 
+type NumFn = fn(Vec<NumType>) -> Result<NumType, CalculatorError>;
+
 pub fn get_constants_hashmap() -> HashMap<String, NumType> {
     let mut c: HashMap<String, NumType> = HashMap::new();
     c.insert(String::from("pi"), Scalar(PI));
@@ -15,10 +17,8 @@ pub fn get_constants_hashmap() -> HashMap<String, NumType> {
     c
 }
 
-pub fn get_default_functions_hashmap(
-) -> HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>> {
-    let mut f: HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>> =
-        HashMap::new();
+pub fn get_default_functions_hashmap() -> HashMap<String, NumFn> {
+    let mut f: HashMap<String, NumFn> = HashMap::new();
 
     /*
     Bunch of function additions here
@@ -28,7 +28,7 @@ pub fn get_default_functions_hashmap(
     Else, it will return a missing parameters error
     */
     f.insert(String::from("sin"), |v| {
-        if let Some(Scalar(n)) = v.get(0) {
+        if let Some(Scalar(n)) = v.first() {
             Ok(Scalar(n.sin()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -37,7 +37,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("cos"), |v| {
-        if let Some(Scalar(n)) = v.get(0) {
+        if let Some(Scalar(n)) = v.first() {
             Ok(Scalar(n.cos()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -46,7 +46,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("tan"), |v| {
-        if let Some(Scalar(n)) = v.get(0) {
+        if let Some(Scalar(n)) = v.first() {
             Ok(Scalar(n.tan()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -55,7 +55,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("asin"), |v| {
-        if let Some(Scalar(n)) = v.get(0) {
+        if let Some(Scalar(n)) = v.first() {
             Ok(Scalar(n.asin()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -64,7 +64,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("acos"), |v| {
-        if let Some(Scalar(n)) = v.get(0) {
+        if let Some(Scalar(n)) = v.first() {
             Ok(Scalar(n.acos()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -73,7 +73,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("atan"), |v| {
-        if let Some(Scalar(n)) = v.get(0) {
+        if let Some(Scalar(n)) = v.first() {
             Ok(Scalar(n.atan()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -82,7 +82,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("abs"), |v| {
-        if let Some(n) = v.get(0) {
+        if let Some(n) = v.first() {
             match n {
                 Scalar(s) => Ok(Scalar(s.abs())),
                 Vector(v) => Ok(Vector(v.iter().map(|f| f.abs()).collect())),
@@ -94,7 +94,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("round"), |v| {
-        if let Some(n) = v.get(0) {
+        if let Some(n) = v.first() {
             match n {
                 Scalar(s) => Ok(Scalar(s.round())),
                 Vector(v) => Ok(Vector(v.iter().map(|f| f.round()).collect())),
@@ -106,7 +106,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("ceil"), |v| {
-        if let Some(n) = v.get(0) {
+        if let Some(n) = v.first() {
             match n {
                 Scalar(s) => Ok(Scalar(s.ceil())),
                 Vector(v) => Ok(Vector(v.iter().map(|f| f.ceil()).collect())),
@@ -118,7 +118,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("floor"), |v| {
-        if let Some(n) = v.get(0) {
+        if let Some(n) = v.first() {
             match n {
                 Scalar(s) => Ok(Scalar(s.floor())),
                 Vector(v) => Ok(Vector(v.iter().map(|f| f.floor()).collect())),
@@ -139,7 +139,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("ln"), |v| {
-        if let Some(Scalar(s)) = v.get(0) {
+        if let Some(Scalar(s)) = v.first() {
             Ok(Scalar(s.ln()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -148,7 +148,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("sqrt"), |v| {
-        if let Some(Scalar(s)) = v.get(0) {
+        if let Some(Scalar(s)) = v.first() {
             Ok(Scalar(s.sqrt()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -157,7 +157,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("rad"), |v| {
-        if let Some(Scalar(s)) = v.get(0) {
+        if let Some(Scalar(s)) = v.first() {
             Ok(Scalar(s.to_radians()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -166,7 +166,7 @@ pub fn get_default_functions_hashmap(
         }
     });
     f.insert(String::from("deg"), |v| {
-        if let Some(Scalar(s)) = v.get(0) {
+        if let Some(Scalar(s)) = v.first() {
             Ok(Scalar(s.to_degrees()))
         } else {
             Err(CalculatorError::MissingFunctionParameters(String::from(
@@ -177,7 +177,7 @@ pub fn get_default_functions_hashmap(
 
     // Vector functions start here
     f.insert(String::from("mag"), |v| {
-        if let Some(Vector(v)) = v.get(0) {
+        if let Some(Vector(v)) = v.first() {
             Ok(Scalar(
                 v.iter().fold(0.0, |acc, n| acc + n.powf(2.0)).sqrt(),
             ))

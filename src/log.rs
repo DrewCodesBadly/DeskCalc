@@ -7,12 +7,14 @@ use symbol_type::SymbolType::*;
 mod built_in;
 pub mod symbol_type;
 
+type NumFn = fn(Vec<NumType>) -> Result<NumType, CalculatorError>;
+
 #[derive(Default)]
 pub struct Log {
     pub history: Vec<(String, String)>,
     vars: HashMap<String, NumType>,
     consts: HashMap<String, NumType>,
-    default_functions: HashMap<String, fn(Vec<NumType>) -> Result<NumType, CalculatorError>>,
+    default_functions: HashMap<String, NumFn>,
     commands: HashMap<String, fn(&mut Log) -> String>,
 }
 
@@ -47,6 +49,7 @@ impl Log {
         self.history.clear();
     }
 
+    #[allow(clippy::manual_map)]
     pub fn search_symbol(&self, symbol: &str) -> Option<SymbolType> {
         // Try every base of symbols
         // First try consts
