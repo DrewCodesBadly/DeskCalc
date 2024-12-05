@@ -33,6 +33,14 @@ impl App for DeskCalc {
                     .frame(false)
                     .desired_width(f32::INFINITY),
             );
+
+            // Clear text box when escape pressed
+            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                self.input_text.clear();
+                response.request_focus();
+                self.out = String::from("...");
+            }
+
             if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 self.out = calculator::calculate_assign(&self.input_text, &mut self.log);
                 self.log.push_results(&self.input_text, &self.out);
