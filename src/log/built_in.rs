@@ -156,6 +156,24 @@ pub fn get_default_functions_hashmap(
             )))
         }
     });
+    f.insert(String::from("rad"), |v| {
+        if let Some(Scalar(s)) = v.get(0) {
+            Ok(Scalar(s.to_radians()))
+        } else {
+            Err(CalculatorError::MissingFunctionParameters(String::from(
+                "rad",
+            )))
+        }
+    });
+    f.insert(String::from("deg"), |v| {
+        if let Some(Scalar(s)) = v.get(0) {
+            Ok(Scalar(s.to_degrees()))
+        } else {
+            Err(CalculatorError::MissingFunctionParameters(String::from(
+                "deg",
+            )))
+        }
+    });
 
     // Vector functions start here
     f.insert(String::from("mag"), |v| {
