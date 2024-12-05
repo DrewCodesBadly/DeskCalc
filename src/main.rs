@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use core::f32;
 use eframe::{run_native, App, CreationContext, NativeOptions};
 use egui::{CentralPanel, Id, Label, Layout, RichText, TextEdit, TopBottomPanel};
