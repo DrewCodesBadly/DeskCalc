@@ -18,6 +18,7 @@ Designed for keyboard use - just type expressions and instantly see results.
 - Operators with no number to the right assume 1: 1+ = 2
 - Variables and constants (e, pi, tau) can be used by their name
 - Functions can be called using syntax function_name(param1,  *any others here...*)
+- The last valid calculator answer can be accessed using a backslash(\)
 - All whitespace is ignored
 ## Defining Variables and Functions
 - Variables can be defined by writing #*var_name* = (expression)
