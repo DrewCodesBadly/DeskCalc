@@ -278,6 +278,8 @@ fn parse<T: Iterator<Item = char> + Clone>(
                     Some(UserFn) => {} // TODO: Implement user functions
                     None => return Err(CalculatorError::UnknownSymbol(name)),
                 }
+
+                previous_number = true;
             }
 
             // otherwise ignore, calc has no clue what to do with this symbol
