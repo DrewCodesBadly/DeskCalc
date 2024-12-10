@@ -9,13 +9,26 @@ pub mod symbol_type;
 
 type NumFn = fn(Vec<NumType>) -> Result<NumType, CalculatorError>;
 
-#[derive(Default)]
 pub struct Log {
     pub history: Vec<(String, String)>,
+    pub last_number: NumType,
     vars: HashMap<String, NumType>,
     consts: HashMap<String, NumType>,
     default_functions: HashMap<String, NumFn>,
     commands: HashMap<String, fn(&mut Log) -> String>,
+}
+
+impl Default for Log {
+    fn default() -> Self {
+        Log {
+            last_number: NumType::Scalar(1.0),
+            history: Vec::<(String, String)>::default(),
+            vars: HashMap::<String, NumType>::default(),
+            consts: HashMap::<String, NumType>::default(),
+            default_functions: HashMap::<String, NumFn>::default(),
+            commands: HashMap::<String, fn(&mut Log) -> String>::default(),
+        }
+    }
 }
 
 impl Log {

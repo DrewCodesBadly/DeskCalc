@@ -122,5 +122,15 @@ fn component_access() {
     assert_eq!(calculate("[3, 4, 5].x", &log), " = 3");
     assert_eq!(calculate("[3, 4, 5].z", &log), " = 5");
     assert_eq!(calculate("[3, 4, 5].0", &log), " = 3");
-    assert_eq!(calculate("[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].12", &log), " = 15");
+    assert_eq!(
+        calculate("[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].12", &log),
+        " = 15"
+    );
+}
+
+#[test]
+fn last_number() {
+    let mut log = Log::default();
+    assert_eq!(calculate_assign("1 + 1", &mut log), " = 2");
+    assert_eq!(calculate_assign("\\ + 1", &mut log), " = 3");
 }

@@ -145,7 +145,10 @@ pub fn calculate_assign(input: &str, log: &mut Log) -> String {
 
     // Parse and return output
     match result {
-        Ok(n) => " = ".to_owned() + &n.to_string(),
+        Ok(n) => {
+            log.last_number = n.clone();
+            " = ".to_owned() + &n.to_string()
+        }
         Err(e) => e.to_string(),
     }
 }
@@ -281,6 +284,9 @@ fn parse<T: Iterator<Item = char> + Clone>(
 
                 previous_number = true;
             }
+
+            // \ character takes the last answer
+            '\\' => e_buffer.push(log.last_number.clone()),
 
             // otherwise ignore, calc has no clue what to do with this symbol
             _ => {}
