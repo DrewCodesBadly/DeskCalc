@@ -7,3 +7,5 @@ edition = "2021"
 egui = "0.29.1"
 eframe = "0.29.1"
 itertools = "0.13.0"
+config = { version = "0.15.11", features = ["toml"]}
+directories = "6.0.0"

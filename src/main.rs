@@ -1,8 +1,11 @@
 #![windows_subsystem = "windows"]
 
 use core::f32;
+use std::collections::HashMap;
+use config::{Config, Map, Value};
+use directories::ProjectDirs;
 use eframe::{run_native, App, CreationContext, NativeOptions};
-use egui::{CentralPanel, Id, Label, Layout, RichText, TextEdit, TopBottomPanel};
+use egui::{CentralPanel, Color32, Id, Label, Layout, RichText, Style, TextEdit, TopBottomPanel, Visuals};
 use log::Log;
 
 mod calculator;
@@ -16,7 +19,7 @@ struct DeskCalc {
 }
 
 impl DeskCalc {
-    fn new(_cc: &CreationContext<'_>) -> Self {
+    fn new(cc: &CreationContext<'_>) -> Self {
         DeskCalc {
             log: Log::new(),
             ..Default::default()
@@ -80,12 +83,43 @@ impl App for DeskCalc {
     }
 }
 
+fn get_config_hex(map: Map<String, Value>, key: &str) -> Option<Color32> {
+    map.get(key).and_then(|s| s.clone().into_string().ok()).and_then(|s| Color32::from_hex(&s).ok())
+}
+
 fn main() {
-    let win_option = NativeOptions::default();
+    let project_dirs = ProjectDirs::from("", "DrewCodesBadly", "DeskCalc");
+    let config_builder = Config::builder();
+    let mut config = Config::default();
+    if let Some(dirs) = project_dirs {
+        let mut path = dirs.preference_dir().to_path_buf();
+        path.push("config.toml");
+        config = config_builder.add_source(config::File::from(path)).build().unwrap_or_default();
+    }
+    let win_option = NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_transparent(config.get_bool("use_transparency").unwrap_or(false)),
+        ..Default::default()
+    };
+
+    // Visual styling according to config - only enabled if colors table has been declared
+    let mut style = Style::default(); 
+    if let Ok(map) = config.get_table("visuals") {
+        // Avoid interfering with panel background
+        style.visuals.window_fill = Color32::from_rgba_premultiplied(0, 0, 0, 0);
+        // Setting each property
+        if let Some(color) = get_config_hex(map, "background") {
+            style.visuals.panel_fill = color;
+        }
+    }
+    
+
     run_native(
         "DeskCalc",
         win_option,
-        Box::new(|cc| Ok(Box::new(DeskCalc::new(cc)))),
+        Box::new(|cc| {
+            cc.egui_ctx.set_style(style);
+            Ok(Box::new(DeskCalc::new(cc)))
+        }),
     )
     .expect("Failed to set up window");
 }
