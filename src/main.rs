@@ -43,13 +43,16 @@ impl App for DeskCalc {
                 self.out = String::from("...");
             }
 
-            if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                self.out = calculator::calculate_assign(&self.input_text, &mut self.log);
-                self.log.push_results(&self.input_text, &self.out);
-                self.input_text.clear();
-                self.out.clear();
-
-                // Move focus back to text input
+            if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                if response.lost_focus() {
+                    self.out = calculator::calculate_assign(&self.input_text, &mut self.log);
+                    self.log.push_results(&self.input_text, &self.out);
+                    self.input_text.clear();
+                    self.out.clear();
+                }
+    
+                // Move focus back to text input - can also be used as a shortcut to jump to text
+                // box
                 response.request_focus();
             } else if response.changed() {
                 // Calculate output given response and set output buffer
