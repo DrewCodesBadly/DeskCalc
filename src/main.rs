@@ -1,11 +1,10 @@
 #![windows_subsystem = "windows"]
 
 use core::f32;
-use std::collections::HashMap;
 use config::{Config, Map, Value};
 use directories::ProjectDirs;
 use eframe::{run_native, App, CreationContext, NativeOptions};
-use egui::{CentralPanel, Color32, Id, Label, Layout, RichText, Style, TextEdit, TopBottomPanel, Visuals};
+use egui::{CentralPanel, Color32, FontFamily, FontId, Id, Label, Layout, RichText, Style, TextEdit, TopBottomPanel};
 use log::Log;
 
 mod calculator;
@@ -19,7 +18,7 @@ struct DeskCalc {
 }
 
 impl DeskCalc {
-    fn new(cc: &CreationContext<'_>) -> Self {
+    fn new(_cc: &CreationContext<'_>) -> Self {
         DeskCalc {
             log: Log::new(),
             ..Default::default()
@@ -83,7 +82,7 @@ impl App for DeskCalc {
     }
 }
 
-fn get_config_hex(map: Map<String, Value>, key: &str) -> Option<Color32> {
+fn get_config_hex(map: &Map<String, Value>, key: &str) -> Option<Color32> {
     map.get(key).and_then(|s| s.clone().into_string().ok()).and_then(|s| Color32::from_hex(&s).ok())
 }
 
@@ -106,10 +105,27 @@ fn main() {
     if let Ok(map) = config.get_table("visuals") {
         // Avoid interfering with panel background
         style.visuals.window_fill = Color32::from_rgba_premultiplied(0, 0, 0, 0);
+
+        let mut font_id = FontId::default();
         // Setting each property
-        if let Some(color) = get_config_hex(map, "background") {
+        if let Some(color) = get_config_hex(&map, "background") {
             style.visuals.panel_fill = color;
         }
+        if let Some(color) = get_config_hex(&map, "text_color") {
+            style.visuals.override_text_color = Some(color);
+        }
+        if let Some(size) = &map.get("font_size").and_then(|v| v.clone().into_float().ok()) {
+            font_id.size = *size as f32;
+        }
+        if let Some(monospace) = &map.get("monospace_fonts").and_then(|v| v.clone().into_bool().ok()) {
+            if *monospace {
+                font_id.family = FontFamily::Monospace;
+            } else {
+                font_id.family = FontFamily::Proportional;
+            }
+        }
+
+        style.override_font_id = Some(font_id);
     }
     
 
